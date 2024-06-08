@@ -13,12 +13,13 @@ import { checkAndRequestSFuel } from "./utils/sfuelClaim";
 import { SyncLoader } from "react-spinners";
 import toast, { Toaster } from "react-hot-toast";
 import { performMulticall } from "./multicall";
+import { MIN_SFUEL_BALANCE, CONTRACT_ADDRESS } from "./utils/constants";
 
 export default function Home() {
   const [isClaiming, setIsClaiming] = useState(false);
-  const MIN_SFUEL_BALANCE = BigInt(10 ** 16);
   const { address, isConnected } = useAccount();
   const searchParams = useSearchParams();
+
   const searchHash =
     searchParams.get("hash") ||
     "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -56,6 +57,7 @@ export default function Home() {
       toast.error("Please connect your wallet");
       return;
     }
+
     try {
       setIsClaiming(true);
       const sFuelBalance = await checkAndRequestSFuel(address);
@@ -66,7 +68,7 @@ export default function Home() {
       }
       writeContract({
         abi: abi,
-        address: "0x40f72b6ac30bca6bdc67321f7706406871c7e36c",
+        address: CONTRACT_ADDRESS,
         functionName: "claimCards",
         args: [address, 0, searchHash, "", []],
       });

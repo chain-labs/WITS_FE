@@ -1,13 +1,6 @@
-import { createPublicClient, http } from "viem";
-import { skaleNebulaTestnet } from "viem/chains";
+import { publicClient } from "./utils/client";
 import { abi } from "./utils/abi";
-
-const CONTRACT_ADDRESS = "0x40f72B6ac30bca6Bdc67321F7706406871C7E36c";
-
-export const publicClient = createPublicClient({
-  chain: skaleNebulaTestnet,
-  transport: http(),
-});
+import { CONTRACT_ADDRESS, MULTICALL_ADDRESS } from "./utils/constants";
 
 const witsContract = {
   address: CONTRACT_ADDRESS,
@@ -15,23 +8,30 @@ const witsContract = {
 } as const;
 
 export async function performMulticall() {
-  const result = await publicClient.multicall({
-    contracts: [
-      {
-        ...witsContract,
-        functionName: "name",
-      },
-      {
-        ...witsContract,
-        functionName: "tokenId",
-      },
-      {
-        ...witsContract,
-        functionName: "symbol",
-      },
-    ],
-    multicallAddress: "0xca11bde05977b3631167028862be2a173976ca11",
-  });
+  try {
+    const result = await publicClient.multicall({
+      contracts: [
+        {
+          ...witsContract,
+          functionName: "name",
+        },
+        {
+          ...witsContract,
+          functionName: "tokenId",
+        },
+        {
+          ...witsContract,
+          functionName: "symbol",
+        },
+      ],
+      multicallAddress: MULTICALL_ADDRESS,
+    });
 
-  console.log(result);
+    if (result) {
+      const res = result.map((r) => r.result?.toString());
+      console.log("MultiCall: ", res);
+    }
+  } catch (error) {
+    console.error(error);
+  }
 }
