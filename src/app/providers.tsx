@@ -8,6 +8,7 @@ import {
 import { WagmiProvider, http } from "wagmi";
 import { skaleNebulaTestnet } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { createPublicClient } from "viem";
 
 const config = getDefaultConfig({
   appName: "WITS",
@@ -20,6 +21,11 @@ const config = getDefaultConfig({
 });
 
 export const queryClient = new QueryClient();
+
+export const publicClient = createPublicClient({
+  chain: skaleNebulaTestnet,
+  transport: http(),
+});
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (

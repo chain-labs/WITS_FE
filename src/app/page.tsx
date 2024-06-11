@@ -9,6 +9,8 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
+import { skaleNebulaTestnet } from "viem/chains";
+import { zeroAddress } from "./utils/constants";
 import { checkAndRequestSFuel } from "./utils/sfuelClaim";
 import { SyncLoader } from "react-spinners";
 import toast, { Toaster } from "react-hot-toast";
@@ -17,12 +19,16 @@ import { MIN_SFUEL_BALANCE, CONTRACT_ADDRESS } from "./utils/constants";
 
 export default function Home() {
   const [isClaiming, setIsClaiming] = useState(false);
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const searchParams = useSearchParams();
 
-  const searchHash =
-    searchParams.get("hash") ||
-    "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const searchHash = searchParams.get("hash") || zeroAddress;
+
+  // function to check if url hash is a valid 32 byte hex string
+  // currently not used but can be used to validate the hash
+  function isValid32ByteHexString(hexString: string): boolean {
+    return /^0x[0-9a-fA-F]{64}$/.test(hexString);
+  }
 
   const {
     data: hash,
@@ -57,7 +63,10 @@ export default function Home() {
       toast.error("Please connect your wallet");
       return;
     }
-
+    if (chainId !== skaleNebulaTestnet.id) {
+      toast.error("Please switch to Skale Nebula Testnet");
+      return;
+    }
     try {
       setIsClaiming(true);
       const sFuelBalance = await checkAndRequestSFuel(address);

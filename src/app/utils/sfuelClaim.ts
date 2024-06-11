@@ -1,13 +1,13 @@
 import { createWalletClient, http } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { skaleNebulaTestnet } from "viem/chains";
-import { publicClient } from "./client";
+import { publicClient } from "../providers";
 import Miner from "./miners";
 import {
-  SKALE_RPC_URL,
   MIN_SFUEL_BALANCE,
   SKALE_FUEL_STATION_ADDRESS,
   functionSignature,
+  gasLimit,
 } from "./constants";
 
 async function requestSFuel(userAddress: `0x${string}`): Promise<void> {
@@ -16,7 +16,7 @@ async function requestSFuel(userAddress: `0x${string}`): Promise<void> {
   const client = createWalletClient({
     account,
     chain: skaleNebulaTestnet,
-    transport: http(SKALE_RPC_URL),
+    transport: http(),
   });
 
   const nonce = await publicClient.getTransactionCount({
@@ -28,7 +28,7 @@ async function requestSFuel(userAddress: `0x${string}`): Promise<void> {
   try {
     const { gasPrice } = await miner.mineGasForTransaction(
       nonce,
-      100_000,
+      gasLimit,
       account.address
     );
 
