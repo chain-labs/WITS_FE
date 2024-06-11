@@ -32,20 +32,16 @@ async function requestSFuel(userAddress: `0x${string}`): Promise<void> {
       account.address
     );
 
-    console.log("Gas Price: ", gasPrice);
-
     const tx = await client.sendTransaction({
       to: SKALE_FUEL_STATION_ADDRESS,
       data: `${functionSignature}000000000000000000000000${userAddress.substring(
         2
       )}`,
-      gasLimit: 100_000,
+      gasLimit: gasLimit,
       gasPrice: gasPrice,
     });
 
     await new Promise<void>((resolve) => setTimeout(resolve, 1000));
-
-    console.log(`sFUEL requested for address: ${userAddress}`);
   } catch (error) {
     console.error("Error requesting sFUEL:", error);
   }
