@@ -1,52 +1,29 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { abi } from "./utils/abi";
 import { useSearchParams } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import {
-  useAccount,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-} from "wagmi";
+import { useAccount } from "wagmi";
 import { zeroAddress } from "./utils/constants";
-import { checkAndRequestSFuel } from "./utils/sfuelClaim";
+import { requestTxn } from "./utils/gaslessTxn";
 import { SyncLoader } from "react-spinners";
 import toast, { Toaster } from "react-hot-toast";
 import { performMulticall } from "./multicall";
-import { MIN_SFUEL_BALANCE, CONTRACT_ADDRESS } from "./utils/constants";
 import { isValid32ByteHexString, isValidChainId } from "./utils/helperFuncs";
 
 export default function Home() {
+  const [hash, setHash] = useState("");
   const [isClaiming, setIsClaiming] = useState(false);
   const { address, isConnected, chainId } = useAccount();
   const searchParams = useSearchParams();
 
   const searchHash = searchParams.get("hash") || zeroAddress;
 
-  const {
-    data: hash,
-    isPending,
-    isError,
-    error,
-    writeContract,
-  } = useWriteContract();
-  const { isSuccess, isLoading } = useWaitForTransactionReceipt({
-    hash: hash,
-  });
-
   useEffect(() => {
-    if (isSuccess) {
+    if (hash) {
       toast.success("Claimed Cards Successfully");
     }
-  }, [isSuccess]);
-
-  useEffect(() => {
-    if (isError) {
-      toast.error("Error during claim process");
-      console.error("Error during claim process:", error);
-    }
-  }, [isError, error]);
+  }, [hash]);
 
   useEffect(() => {
     performMulticall().catch(console.error);
@@ -67,20 +44,11 @@ export default function Home() {
     }
     try {
       setIsClaiming(true);
-      const sFuelBalance = await checkAndRequestSFuel(address);
-      if (BigInt(sFuelBalance) < MIN_SFUEL_BALANCE) {
-        console.error("Insufficient sFUEL balance");
-        setIsClaiming(false);
-        return;
-      }
-      writeContract({
-        abi: abi,
-        address: CONTRACT_ADDRESS,
-        functionName: "claimCards",
-        args: [address, 0, searchHash, "", []],
-      });
+      const res = await requestTxn(address, searchHash);
+      setHash(res);
     } catch (error) {
       console.error("Error during claim process:", error);
+      toast.error("Error during claim process");
     } finally {
       setIsClaiming(false);
     }
@@ -98,11 +66,7 @@ export default function Home() {
       >
         <div className="group-hover:text-black group-active:text-black text-yellow-300 z-40">
           <p className="text-[25px] font-bold z-40">
-            {isClaiming || isPending || isLoading ? (
-              <SyncLoader size={12} color={"#FACA15"} />
-            ) : (
-              "Claim"
-            )}
+            {isClaiming ? <SyncLoader size={12} color={"#FACA15"} /> : "Claim"}
           </p>
         </div>
         <Image
@@ -125,7 +89,7 @@ export default function Home() {
         />
       </button>
       <div className="relative z-30">
-        {isSuccess && (
+        {hash && (
           <p className="text-yellow-200 font-bold">
             Claimed Cards Txn Hash : {hash}
           </p>
