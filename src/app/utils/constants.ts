@@ -1,0 +1,8 @@
+export const CONTRACT_ADDRESS = "0x40f72B6ac30bca6Bdc67321F7706406871C7E36c";
+export const MIN_SFUEL_BALANCE = BigInt(10 ** 16);
+export const SKALE_FUEL_STATION_ADDRESS =
+  "0x000E9c53C4e2e21F5063f2e232d0AA907318dccb";
+export const functionSignature = "0x0c11dedd";
+export const zeroAddress =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
+export const gasLimit = 100_000;
