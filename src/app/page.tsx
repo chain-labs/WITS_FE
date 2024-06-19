@@ -1,23 +1,28 @@
 "use client";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
-import { zeroAddress } from "./utils/constants";
-import { requestTxn } from "./utils/gaslessTxn";
-import { SyncLoader } from "react-spinners";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { performMulticall } from "./multicall";
-import { isValid32ByteHexString, isValidChainId } from "./utils/helperFuncs";
+import { SyncLoader } from "react-spinners";
+import { useAccount } from "wagmi";
+import { requestTxn } from "./utils/gaslessTxn";
+import {
+  clearLocalStorage,
+  isValid32ByteHexString,
+  isValidChainId,
+  saveToLocalStorage,
+} from "./utils/helperFuncs";
 
 export default function Home() {
   const [hash, setHash] = useState("");
   const [isClaiming, setIsClaiming] = useState(false);
   const { address, isConnected, chainId } = useAccount();
   const searchParams = useSearchParams();
+  const [localHashes, setLocalHashes] = useState<string[]>([]);
+  console.log("localHashes", localHashes);
 
-  const searchHash = searchParams.get("hash") || zeroAddress;
+  const searchHash = searchParams.get("hash") || "";
 
   useEffect(() => {
     if (hash) {
@@ -25,8 +30,23 @@ export default function Home() {
     }
   }, [hash]);
 
+  // useEffect(() => {
+  //   performMulticall().catch(console.error);
+  // }, []);
+
   useEffect(() => {
-    performMulticall().catch(console.error);
+    const storedValue: string[] = JSON.parse(
+      localStorage.getItem("scannedCards") || JSON.stringify([])
+    );
+    let newHashes = [...storedValue];
+    if (
+      isValid32ByteHexString(searchHash) &&
+      !storedValue.includes(searchHash)
+    ) {
+      newHashes = [...storedValue, searchHash];
+      saveToLocalStorage("scannedCards", newHashes);
+    }
+    setLocalHashes(newHashes);
   }, []);
 
   const onClaim = async () => {
@@ -46,6 +66,8 @@ export default function Home() {
       setIsClaiming(true);
       const res = await requestTxn(address, searchHash);
       setHash(res);
+      clearLocalStorage("scannedCards");
+      setLocalHashes([]);
     } catch (error) {
       console.error("Error during claim process:", error);
       toast.error("Error during claim process");
